@@ -1,5 +1,6 @@
 import funciones
 
+#FUNCION PARA EJECUTAR TODO EL PROCESO DE EXTRACCIÓN, TRANSFORMACIÓN, ENRIQUECIMIENTO Y VISUALIZACIÓN
 def ejecutar_pipeline():
     print("\n--- INICIANDO PIPELINE DE DATOS ---")
     
@@ -31,7 +32,7 @@ def ejecutar_pipeline():
     print("\nPIPELINE COMPLETADO EXITOSAMENTE")
     return base_maestra, inv_limpio, df_logs, df_competencia,perf
 
-###############
+# BLOQUE PRINCIPAL DE EJECUCIÓN
 
 if __name__ == "__main__":
     try:
