@@ -15,6 +15,7 @@ from sklearn.cluster import KMeans
 from pymongo import MongoClient
 
 
+#----------------------------------------------FUNCIONES DE EXTRACCION--------------------------------------------------------------------------------
 def extraer_inventario(ruta_csv):
     """Carga el inventario desde CSV."""
     df=pd.read_csv(ruta_csv)
@@ -53,6 +54,61 @@ def extraer_ventas(ruta_db):
 def extraer_metas(ruta_excel):
     """Carga metas anuales desde Excel."""
     return pd.read_excel(ruta_excel, engine='openpyxl')
+
+def extraer_precios_competencia_real():
+    """
+    PUNTO 1: Web Scraping Real desde Servidor Local (XAMPP).
+    """
+    url = "http://localhost/proyecto_retail/competencia.html"
+    
+    try:
+        # Hacemos la petición al servidor XAMPP
+        respuesta = requests.get(url)
+        respuesta.encoding = 'utf-8' # Asegurar que lea bien acentos
+        
+        if respuesta.status_code == 200:
+            soup = BeautifulSoup(respuesta.text, 'html.parser')
+            tabla = soup.find('table', {'id': 'tabla-precios'})
+            
+            datos = []
+            for row in tabla.find_all('tr')[1:]:
+                cols = row.find_all('td')
+                datos.append({
+                    "producto": cols[0].text,
+                    "precio_competencia": float(cols[1].text)
+                })
+            
+            print("Web Scraping exitoso desde http://localhost!")
+            return pd.DataFrame(datos)
+        else:
+            print("El servidor respondió, pero la página no existe.")
+            return pd.DataFrame()
+
+    except requests.exceptions.ConnectionError:
+        print(" ERROR: El servidor XAMPP no está encendido.")
+        return pd.DataFrame()
+
+def extraer_tipo_cambio_api():
+    """
+    PUNTO 1: API REST. 
+    Obtiene el tipo de cambio actual de MXN a USD.
+    """
+    url = "https://api.exchangerate-api.com/v4/latest/MXN"
+    
+    try:
+        print("Consultando API de Tipo de Cambio...")
+        respuesta = requests.get(url)
+        if respuesta.status_code == 200:
+            datos = respuesta.json()
+            tasa_usd = datos['rates']['USD']
+            print(f"Tasa obtenida: 1 MXN = {tasa_usd} USD")
+            return tasa_usd
+        else:
+            return 0.050  # Valor de respaldo (aprox 20 pesos por dólar)
+    except:
+        print("No se pudo conectar a la API. Usando valor estático.")
+        return 0.050
+#----------------------------------------------FUNCIONES DE LIMPIEZA--------------------------------------------------------------------------------
 
 def limpiar_inventario(df):
     """Aplica reglas: eliminar duplicados y manejar nulos."""
@@ -115,6 +171,7 @@ def aplicar_reglas_negocio(df):
         np.where(df['monto'] > 3000, 'VIP', 'Regular')
     )
     return df
+#----------------------------------------------FUNCION DE PCA--------------------------------------------------------------------------------
 
 def aplicar_pca_avanzado(df):
     """
@@ -167,38 +224,8 @@ def aplicar_pca_avanzado(df):
     
     return df
 
-def extraer_precios_competencia_real():
-    """
-    PUNTO 1: Web Scraping Real desde Servidor Local (XAMPP).
-    """
-    url = "http://localhost/proyecto_retail/competencia.html"
-    
-    try:
-        # Hacemos la petición al servidor XAMPP
-        respuesta = requests.get(url)
-        respuesta.encoding = 'utf-8' # Asegurar que lea bien acentos
-        
-        if respuesta.status_code == 200:
-            soup = BeautifulSoup(respuesta.text, 'html.parser')
-            tabla = soup.find('table', {'id': 'tabla-precios'})
-            
-            datos = []
-            for row in tabla.find_all('tr')[1:]:
-                cols = row.find_all('td')
-                datos.append({
-                    "producto": cols[0].text,
-                    "precio_competencia": float(cols[1].text)
-                })
-            
-            print("Web Scraping exitoso desde http://localhost!")
-            return pd.DataFrame(datos)
-        else:
-            print("El servidor respondió, pero la página no existe.")
-            return pd.DataFrame()
+#----------------------------------------------FUNCIONES DE VISUALIZACION--------------------------------------------------------------------------------
 
-    except requests.exceptions.ConnectionError:
-        print(" ERROR: El servidor XAMPP no está encendido.")
-        return pd.DataFrame()
     
 def grafico_3d_interactivo(df):
     """Gráfico 3D Interactivo con Plotly mostrando los 3 arquetipos."""
@@ -209,33 +236,13 @@ def grafico_3d_interactivo(df):
     )
     fig.show()
 
-def extraer_tipo_cambio_api():
-    """
-    PUNTO 1: API REST. 
-    Obtiene el tipo de cambio actual de MXN a USD.
-    """
-    url = "https://api.exchangerate-api.com/v4/latest/MXN"
-    
-    try:
-        print("Consultando API de Tipo de Cambio...")
-        respuesta = requests.get(url)
-        if respuesta.status_code == 200:
-            datos = respuesta.json()
-            tasa_usd = datos['rates']['USD']
-            print(f"Tasa obtenida: 1 MXN = {tasa_usd} USD")
-            return tasa_usd
-        else:
-            return 0.050  # Valor de respaldo (aprox 20 pesos por dólar)
-    except:
-        print("No se pudo conectar a la API. Usando valor estático.")
-        return 0.050
+
 
 def generar_visualizaciones(df):
     """
     Genera los gráficos requeridos por la rúbrica usando los nuevos arquetipos.
     """
     
-
     # Configuramos el estilo
     sns.set_theme(style="whitegrid")
     # Aumentamos un poco el tamaño para que se vea mejor

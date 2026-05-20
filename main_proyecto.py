@@ -50,7 +50,7 @@ if __name__ == "__main__":
         funciones.generar_visualizaciones(df_final)
         funciones.grafico_3d_interactivo(df_final) # Gráfico 3D interactivo con Plotly (se abre en el navegador)
         
-        # 4. Gráfico interactivo (HTML) - YA NO DARÁ ERROR
+        # 4. Gráfico interactivo (HTML) 
         print("\nGenerando Diagrama de Sankey...")
         funciones.generar_sankey_flujo(df_final, perf_originales, logs_final)
         
